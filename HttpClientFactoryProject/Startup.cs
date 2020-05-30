@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
 using System;
+using Refit;
 
 namespace HttpClientFactoryProject
 {
@@ -25,11 +26,11 @@ namespace HttpClientFactoryProject
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.Configure<ApiConfig>(Configuration.GetSection(nameof(ApiConfig)));
+           // services.Configure<ApiConfig>(Configuration.GetSection(nameof(ApiConfig)));
 
 
             //Singleton
-            services.AddSingleton<IApiConfig>(x => x.GetRequiredService<IOptions<ApiConfig>>().Value);
+          //  services.AddSingleton<IApiConfig>(x => x.GetRequiredService<IOptions<ApiConfig>>().Value);
 
             //Criar uma politica de retry (tente 3x, com timeout de 3 segundos)
             var retryPolicy = HttpPolicyExtensions.HandleTransientHttpError()
@@ -37,9 +38,14 @@ namespace HttpClientFactoryProject
 
 
             //Registrar httpclient
-            services.AddHttpClient<ITodoService, TodoService>(b =>
-                                    b.BaseAddress = new Uri(Configuration["ApiConfig:BaseUrl"]))
-                .AddPolicyHandler(retryPolicy);
+            //services.AddHttpClient<ITodoService, TodoService>(b =>
+            //                        b.BaseAddress = new Uri(Configuration["ApiConfig:BaseUrl"]))
+
+            services.AddRefitClient<ITodoService>()
+                .ConfigureHttpClient(client =>
+                {
+                    client.BaseAddress = new Uri(Configuration["ApiConfig:BaseUrl"]);
+                }).AddPolicyHandler(retryPolicy);
 
 
             services.AddControllers();
